@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CharacterForm from './CharacterForm';
@@ -92,14 +91,6 @@ const CastingTool = () => {
     }
   };
 
-  const handleDownloadReport = () => {
-    toast.success("Downloading report...");
-    // In a real application, this would call a service to generate a PDF
-    setTimeout(() => {
-      toast.success("Report downloaded successfully!");
-    }, 2000);
-  };
-
   const handleReset = () => {
     setCharacterData(null);
     setCandidatesData([]);
@@ -147,8 +138,9 @@ const CastingTool = () => {
                 <MatchResults
                   characterImage={matchResults?.characterImage || ""}
                   candidates={matchResults?.candidates || []}
-                  onDownload={handleDownloadReport}
+                  onDownload={() => {}} // This is unused, actual download happens in MatchResults
                   onReset={handleReset}
+                  characterData={characterData}
                 />
               </TabsContent>
             </Tabs>

@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { MatchedCandidate } from './groqCloudService';
+import type { Database } from '@/integrations/supabase/types';
 
 export interface MatchResultRecord {
   id?: string;
@@ -14,7 +15,7 @@ export const saveMatchResults = async (
   characterData: any,
   characterImage: string,
   matchedCandidates: MatchedCandidate[]
-): Promise<{ success: boolean; error?: any }> => {
+): Promise<{ success: boolean; error?: any; data?: any }> => {
   try {
     const { data, error } = await supabase
       .from('match_results')

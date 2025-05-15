@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { MatchedCandidate } from '@/services/groqCloudService';
 import { saveMatchResults } from '@/services/matchResultsService';
 import { generateReport } from '@/services/reportService';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Download, RotateCcw } from 'lucide-react';
 
 type MatchResultsProps = {
@@ -37,10 +36,8 @@ const MatchResults = ({
         );
         
         if (!result.success) {
-          toast({
-            title: "Error Saving Results",
-            description: "There was an error saving your match results.",
-            variant: "destructive"
+          toast.error("Error Saving Results", {
+            description: "There was an error saving your match results."
           });
         }
       }
@@ -51,9 +48,8 @@ const MatchResults = ({
 
   const handleDownload = async () => {
     try {
-      toast({
-        title: "Generating PDF",
-        description: "Please wait while we generate your report..."
+      toast.loading("Generating PDF report...", {
+        id: "generate-pdf"
       });
       
       const pdfBlob = await generateReport(characterData, characterImage, candidates);
@@ -70,16 +66,15 @@ const MatchResults = ({
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      toast({
-        title: "Report Downloaded",
+      toast.success("Report Downloaded", {
+        id: "generate-pdf",
         description: "Your casting report has been downloaded successfully."
       });
     } catch (error) {
       console.error('Error generating report:', error);
-      toast({
-        title: "Download Failed",
-        description: "There was an error generating your report. Please try again.",
-        variant: "destructive"
+      toast.error("Download Failed", {
+        id: "generate-pdf",
+        description: "There was an error generating your report. Please try again."
       });
     }
   };
