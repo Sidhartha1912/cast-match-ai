@@ -17,9 +17,6 @@ const Hero = () => {
             <Button size="lg" className="bg-castmatch-purple hover:bg-castmatch-lightPurple text-white">
               <a href="#tool">Try the Tool Now</a>
             </Button>
-            <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10">
-              View Sample Report
-            </Button>
           </div>
         </div>
       </div>
