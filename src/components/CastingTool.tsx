@@ -86,7 +86,7 @@ const CastingTool = () => {
       setActiveTab('results');
     } catch (error) {
       toast.error("Failed to match candidates");
-      console.error(error);
+      console.error("Error matching candidates:", error);
     } finally {
       setIsLoading(false);
     }

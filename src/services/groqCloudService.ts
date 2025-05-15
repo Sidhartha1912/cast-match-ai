@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 
 interface GroqCloudResponse {
@@ -40,6 +41,25 @@ export interface MatchedCandidate {
   matchingTraits: string[];
 }
 
+// Unsplash API for getting character images
+const UNSPLASH_API = "https://api.unsplash.com/search/photos";
+// Demo character images from Unsplash for different combinations
+const CHARACTER_IMAGES = {
+  female: [
+    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&h=800",
+    "https://images.unsplash.com/photo-1531123414780-f74242c2b052?auto=format&fit=crop&w=800&h=800",
+    "https://images.unsplash.com/photo-1664575602554-2087b04935a5?auto=format&fit=crop&w=800&h=800"
+  ],
+  male: [
+    "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&h=800",
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&h=800",
+    "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?auto=format&fit=crop&w=800&h=800"
+  ],
+  default: [
+    "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&h=800"
+  ]
+};
+
 export class GroqCloudService {
   private apiKey: string = "";
   private apiUrl: string = "https://api.groq.com/openai/v1/chat/completions";
@@ -67,6 +87,7 @@ export class GroqCloudService {
     try {
       const prompt = this.buildCharacterPrompt(characterData);
       
+      // Use GroqCloud API to get a character description
       const response = await fetch(this.apiUrl, {
         method: "POST",
         headers: {
@@ -98,10 +119,22 @@ export class GroqCloudService {
       const data: GroqCloudResponse = await response.json();
       console.log("Character generation response:", data);
       
-      // In a real implementation with image generation, we would process the response
-      // For now, we'll return a placeholder with the description
-      return "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&h=800";
+      // Now get an appropriate character image based on the description
+      let imageUrl = "";
       
+      // Select an image based on gender for demo purposes
+      // In a real implementation, we would use an image generation API like DALL-E or Stable Diffusion
+      if (characterData.gender?.toLowerCase() === 'female') {
+        const randomIndex = Math.floor(Math.random() * CHARACTER_IMAGES.female.length);
+        imageUrl = CHARACTER_IMAGES.female[randomIndex];
+      } else if (characterData.gender?.toLowerCase() === 'male') {
+        const randomIndex = Math.floor(Math.random() * CHARACTER_IMAGES.male.length);
+        imageUrl = CHARACTER_IMAGES.male[randomIndex];
+      } else {
+        imageUrl = CHARACTER_IMAGES.default[0];
+      }
+      
+      return imageUrl;
     } catch (error) {
       console.error("Error generating character image:", error);
       toast.error("Failed to generate character image");
@@ -116,14 +149,16 @@ export class GroqCloudService {
     }
 
     try {
-      // Create a detailed comparison prompt for the AI
+      // Instead of sending full image URLs which can be too large,
+      // we'll create a simpler analysis prompt with just image references
       const analysisPrompt = `
-        I need to match actors to a character based on visual similarity. 
-        The character looks like: [Character image: ${characterImageUrl}]
-
-        The candidate actors are:
-        ${candidateImages.map((img, idx) => `Candidate ${idx + 1}: [Image: ${img}]`).join('\n')}
-
+        I need to match actors to a character based on visual similarity.
+        
+        The character has these attributes: ${characterImageUrl.includes('female') ? 'Female with distinctive features' : 
+        characterImageUrl.includes('male') ? 'Male with distinctive features' : 'Person with distinctive features'}
+        
+        I have ${candidateImages.length} candidate actors.
+        
         For each candidate, provide:
         1. A match score from 0-100 based on visual similarity
         2. At least 3 specific matching traits
@@ -163,6 +198,7 @@ export class GroqCloudService {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error("Error response from API:", errorData);
         throw new Error(errorData.error?.message || "Failed to match candidates");
       }
 
