@@ -1,20 +1,88 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { MatchedCandidate } from '@/services/groqCloudService';
+import { saveMatchResults } from '@/services/matchResultsService';
+import { generateReport } from '@/services/reportService';
+import { toast } from '@/hooks/use-toast';
+import { Download, RotateCcw } from 'lucide-react';
 
 type MatchResultsProps = {
   characterImage: string;
   candidates: MatchedCandidate[];
   onDownload: () => void;
   onReset: () => void;
+  characterData?: any;
 };
 
-const MatchResults = ({ characterImage, candidates, onDownload, onReset }: MatchResultsProps) => {
+const MatchResults = ({ 
+  characterImage, 
+  candidates, 
+  onReset, 
+  characterData = {}
+}: MatchResultsProps) => {
   // Sort candidates by match score (highest first)
   const sortedCandidates = [...candidates].sort((a, b) => b.matchScore - a.matchScore);
+
+  // Save match results to Supabase when component mounts
+  useEffect(() => {
+    const saveResults = async () => {
+      if (candidates.length > 0) {
+        const result = await saveMatchResults(
+          characterData,
+          characterImage,
+          candidates
+        );
+        
+        if (!result.success) {
+          toast({
+            title: "Error Saving Results",
+            description: "There was an error saving your match results.",
+            variant: "destructive"
+          });
+        }
+      }
+    };
+    
+    saveResults();
+  }, [candidates, characterData, characterImage]);
+
+  const handleDownload = async () => {
+    try {
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your report..."
+      });
+      
+      const pdfBlob = await generateReport(characterData, characterImage, candidates);
+      
+      // Create download link and trigger download
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `castmatch-report-${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Report Downloaded",
+        description: "Your casting report has been downloaded successfully."
+      });
+    } catch (error) {
+      console.error('Error generating report:', error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error generating your report. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <Card className="w-full animate-fade-in">
@@ -87,8 +155,9 @@ const MatchResults = ({ characterImage, candidates, onDownload, onReset }: Match
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             className="bg-castmatch-purple hover:bg-castmatch-deepPurple flex-1"
-            onClick={onDownload}
+            onClick={handleDownload}
           >
+            <Download className="w-4 h-4 mr-2" />
             Download Report
           </Button>
           <Button
@@ -96,6 +165,7 @@ const MatchResults = ({ characterImage, candidates, onDownload, onReset }: Match
             className="flex-1"
             onClick={onReset}
           >
+            <RotateCcw className="w-4 h-4 mr-2" />
             Start New Analysis
           </Button>
         </div>
