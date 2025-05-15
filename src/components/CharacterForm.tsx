@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useForm } from 'react-hook-form';
+import { Loader2 } from 'lucide-react';
 
 // Define all dropdown options
 const genderOptions = ['Male', 'Female', 'Non-binary'];
@@ -42,9 +42,10 @@ const personalityVibeOptions = ['Charming', 'Villainous', 'Innocent', 'Tough', '
 
 type CharacterFormProps = {
   onSubmit: (data: any) => void;
+  isLoading?: boolean;
 };
 
-const CharacterForm = ({ onSubmit }: CharacterFormProps) => {
+const CharacterForm = ({ onSubmit, isLoading = false }: CharacterFormProps) => {
   const form = useForm({
     defaultValues: {
       gender: '',
@@ -597,8 +598,19 @@ const CharacterForm = ({ onSubmit }: CharacterFormProps) => {
               )}
             />
 
-            <Button type="submit" className="w-full bg-castmatch-purple hover:bg-castmatch-deepPurple">
-              Generate Character
+            <Button 
+              type="submit" 
+              className="w-full bg-castmatch-purple hover:bg-castmatch-deepPurple"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating Character...
+                </>
+              ) : (
+                "Generate Character"
+              )}
             </Button>
           </form>
         </Form>

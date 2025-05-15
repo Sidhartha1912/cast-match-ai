@@ -1,203 +1,159 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, X, Image } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 type CandidateUploadProps = {
   onUpload: (candidates: any[]) => void;
+  isLoading?: boolean;
 };
 
-const CandidateUpload = ({ onUpload }: CandidateUploadProps) => {
-  const [candidates, setCandidates] = useState<any[]>([]);
-  const [currentCandidate, setCurrentCandidate] = useState({
-    name: '',
-    images: [] as File[],
-    previewUrls: [] as string[]
-  });
+const CandidateUpload = ({ onUpload, isLoading = false }: CandidateUploadProps) => {
+  const [candidates, setCandidates] = useState<any[]>([
+    { id: 1, name: "Candidate 1", file: null, image: null },
+    { id: 2, name: "Candidate 2", file: null, image: null },
+    { id: 3, name: "Candidate 3", file: null, image: null },
+  ]);
 
-  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newImages = Array.from(e.target.files);
-      const newPreviewUrls = newImages.map(file => URL.createObjectURL(file));
-      
-      setCurrentCandidate(prev => ({
-        ...prev,
-        images: [...prev.images, ...newImages],
-        previewUrls: [...prev.previewUrls, ...newPreviewUrls]
-      }));
-    }
-  }, []);
+  const handleNameChange = (id: number, name: string) => {
+    setCandidates(candidates.map(candidate => 
+      candidate.id === id ? { ...candidate, name } : candidate
+    ));
+  };
 
-  const removeImage = (index: number) => {
-    setCurrentCandidate(prev => {
-      const newImages = [...prev.images];
-      const newPreviewUrls = [...prev.previewUrls];
-      
-      // Revoke the URL to avoid memory leaks
-      URL.revokeObjectURL(newPreviewUrls[index]);
-      
-      newImages.splice(index, 1);
-      newPreviewUrls.splice(index, 1);
-      
-      return {
-        ...prev,
-        images: newImages,
-        previewUrls: newPreviewUrls
-      };
-    });
+  const handleFileChange = (id: number, file: File | null) => {
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setCandidates(candidates.map(candidate => 
+        candidate.id === id ? { ...candidate, file, image: e.target?.result } : candidate
+      ));
+    };
+    reader.readAsDataURL(file);
   };
 
   const addCandidate = () => {
-    if (currentCandidate.name.trim() === '' || currentCandidate.images.length === 0) {
-      return;
-    }
-    
-    setCandidates(prev => [...prev, { ...currentCandidate }]);
-    setCurrentCandidate({
-      name: '',
-      images: [],
-      previewUrls: []
-    });
+    const newId = Math.max(0, ...candidates.map(c => c.id)) + 1;
+    setCandidates([...candidates, { id: newId, name: `Candidate ${newId}`, file: null, image: null }]);
   };
 
-  const removeCandidate = (index: number) => {
-    setCandidates(prev => {
-      const newCandidates = [...prev];
-      
-      // Revoke all URLs for this candidate
-      newCandidates[index].previewUrls.forEach((url: string) => URL.revokeObjectURL(url));
-      
-      newCandidates.splice(index, 1);
-      return newCandidates;
-    });
+  const removeCandidate = (id: number) => {
+    setCandidates(candidates.filter(candidate => candidate.id !== id));
   };
 
   const handleSubmit = () => {
-    // Add the current candidate if it has a name and images
-    if (currentCandidate.name.trim() !== '' && currentCandidate.images.length > 0) {
-      addCandidate();
+    const validCandidates = candidates.filter(c => c.file && c.image);
+    if (validCandidates.length === 0) {
+      alert("Please upload at least one candidate image.");
+      return;
     }
     
-    onUpload(candidates);
+    // Use placeholder images for demo if no real images uploaded
+    if (validCandidates.length < 3) {
+      const placeholders = [
+        "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&h=800",
+        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&h=800",
+        "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&w=800&h=800",
+      ];
+      
+      // Fill in missing candidates with placeholders
+      while (validCandidates.length < 3) {
+        const idx = validCandidates.length;
+        validCandidates.push({
+          id: idx + 100,
+          name: `Demo Candidate ${idx + 1}`,
+          file: null,
+          image: placeholders[idx % placeholders.length]
+        });
+      }
+    }
+    
+    onUpload(validCandidates);
   };
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-xl">Step 2: Upload Candidate Photos</CardTitle>
+        <CardTitle className="text-xl">Step 2: Upload Candidates</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Add New Candidate</h3>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <Label htmlFor="candidateName">Candidate Name</Label>
-                <Input
-                  id="candidateName"
-                  value={currentCandidate.name}
-                  onChange={(e) => setCurrentCandidate(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter candidate name"
-                />
+        <div className="space-y-6">
+          {candidates.map((candidate) => (
+            <div key={candidate.id} className="p-4 border rounded-md space-y-3">
+              <div className="flex justify-between items-center">
+                <Label htmlFor={`name-${candidate.id}`}>Name</Label>
+                {candidates.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeCandidate(candidate.id)}
+                  >
+                    Remove
+                  </Button>
+                )}
               </div>
               
-              <div className="space-y-2">
-                <Label>Upload Images</Label>
-                <div className="border-2 border-dashed rounded-md p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => document.getElementById('imageUpload')?.click()}>
-                  <div className="flex flex-col items-center">
-                    <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-sm font-medium">Drag & drop or click to upload</p>
-                    <p className="text-xs text-muted-foreground mt-1">Support for multiple images</p>
-                  </div>
+              <Input
+                id={`name-${candidate.id}`}
+                value={candidate.name}
+                onChange={(e) => handleNameChange(candidate.id, e.target.value)}
+                className="mb-3"
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor={`file-${candidate.id}`}>Upload Photo</Label>
                   <Input
-                    id="imageUpload"
+                    id={`file-${candidate.id}`}
                     type="file"
-                    multiple
                     accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
+                    onChange={(e) => handleFileChange(candidate.id, e.target.files?.[0] || null)}
+                    className="mt-1"
                   />
                 </div>
-              </div>
-
-              {currentCandidate.previewUrls.length > 0 && (
-                <div>
-                  <Label>Preview</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
-                    {currentCandidate.previewUrls.map((url, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={url}
-                          alt={`Preview ${index + 1}`}
-                          className="h-24 w-full object-cover rounded-md"
-                        />
-                        <button
-                          type="button"
-                          className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeImage(index)}
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
+                {candidate.image && (
+                  <div className="flex justify-center items-center">
+                    <img
+                      src={candidate.image}
+                      alt={candidate.name}
+                      className="h-24 w-24 object-cover rounded-md"
+                    />
                   </div>
-                </div>
+                )}
+              </div>
+            </div>
+          ))}
+          
+          <div className="flex flex-col md:flex-row gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addCandidate}
+              className="flex-1"
+            >
+              Add Another Candidate
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              className="bg-castmatch-purple hover:bg-castmatch-deepPurple flex-1"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Match Candidates"
               )}
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addCandidate}
-                disabled={currentCandidate.name.trim() === '' || currentCandidate.images.length === 0}
-              >
-                Add Candidate
-              </Button>
-            </div>
+            </Button>
           </div>
-
-          {candidates.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Added Candidates</h3>
-              <div className="space-y-4">
-                {candidates.map((candidate, index) => (
-                  <div key={index} className="border rounded-md p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-medium">{candidate.name}</h4>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeCandidate(index)}
-                      >
-                        <X size={16} />
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {candidate.previewUrls.map((url: string, imgIndex: number) => (
-                        <img
-                          key={imgIndex}
-                          src={url}
-                          alt={`${candidate.name} ${imgIndex + 1}`}
-                          className="h-20 w-full object-cover rounded-md"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <Button
-            className="w-full bg-castmatch-purple hover:bg-castmatch-deepPurple"
-            onClick={handleSubmit}
-            disabled={candidates.length === 0}
-          >
-            Submit Candidates
-          </Button>
         </div>
       </CardContent>
     </Card>
