@@ -1,15 +1,14 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 
 const Header = () => {
   return (
     <header className="w-full py-4 border-b">
       <div className="container flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2">
           <span className="text-2xl font-bold text-castmatch-purple">CastMatch.AI</span>
-        </Link>
+        </a>
         <div className="hidden sm:flex items-center gap-6">
           <Button variant="ghost" asChild>
             <a href="#how-it-works">How It Works</a>
