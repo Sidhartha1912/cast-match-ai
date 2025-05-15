@@ -5,8 +5,8 @@ import CharacterForm from './CharacterForm';
 import CandidateUpload from './CandidateUpload';
 import MatchResults from './MatchResults';
 import ApiKeyInput from './ApiKeyInput';
-import { toast } from "@/components/ui/sonner";
-import groqCloudService, { CharacterDescription } from '@/services/groqCloudService';
+import { toast } from "sonner";
+import groqCloudService, { CharacterDescription, MatchedCandidate } from '@/services/groqCloudService';
 
 const CastingTool = () => {
   const [activeTab, setActiveTab] = useState('character');
@@ -16,13 +16,24 @@ const CastingTool = () => {
   const [isApiKeySet, setIsApiKeySet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [characterImage, setCharacterImage] = useState<string>("");
-  const [matchResults, setMatchResults] = useState<any>(null);
+  const [matchResults, setMatchResults] = useState<{
+    characterImage: string;
+    candidates: MatchedCandidate[];
+  } | null>(null);
+
+  // Check if API key is already set on component mount
+  useEffect(() => {
+    // If the groqCloudService already has the API key set in its constructor
+    if (groqCloudService.hasApiKey()) {
+      setIsApiKeySet(true);
+    }
+  }, []);
 
   const handleCharacterSubmit = async (data: CharacterDescription) => {
     console.log("Character data:", data);
     
     if (!isApiKeySet) {
-      toast.error("Please set your GroqCloud API key first");
+      toast.error("Please wait for GroqCloud API to be configured");
       return;
     }
     
@@ -55,13 +66,20 @@ const CastingTool = () => {
     toast.success("Processing candidates...");
     
     try {
-      // In a real implementation, we would pass the actual image files
       const candidateImageUrls = candidates.map(c => c.image || "");
       const results = await groqCloudService.matchCandidates(characterImage, candidateImageUrls);
       
+      // Update the candidate names in the results
+      const namedResults = results.map((result, index) => {
+        if (index < candidates.length && candidates[index].name) {
+          return { ...result, name: candidates[index].name };
+        }
+        return result;
+      });
+      
       setMatchResults({
         characterImage: characterImage,
-        candidates: results
+        candidates: namedResults
       });
       
       setShowResults(true);

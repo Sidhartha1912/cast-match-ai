@@ -1,8 +1,6 @@
 
-import { useState } from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import groqCloudService from '@/services/groqCloudService';
 
@@ -11,48 +9,27 @@ interface ApiKeyInputProps {
 }
 
 const ApiKeyInput = ({ onKeySet }: ApiKeyInputProps) => {
-  const [apiKey, setApiKey] = useState<string>("");
-  
-  const handleSetApiKey = () => {
-    if (!apiKey || apiKey.trim() === "") {
-      toast.error("Please enter a valid GroqCloud API key");
-      return;
-    }
-    
+  useEffect(() => {
+    // Use the provided API key directly
+    const apiKey = "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";
     groqCloudService.setApiKey(apiKey);
-    toast.success("API key set successfully");
+    toast.success("API key configured successfully");
     onKeySet();
-  };
+  }, [onKeySet]);
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Set GroqCloud API Key</CardTitle>
+        <CardTitle>GroqCloud API Integration</CardTitle>
         <CardDescription>
-          Enter your GroqCloud API key to enable character generation and candidate matching
+          The application is being configured to connect to GroqCloud AI services
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col space-y-4">
-          <Input
-            type="password"
-            placeholder="Enter your GroqCloud API key"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            Your API key is stored locally in your browser session and is never sent to our servers.
-          </p>
+          <p>Setting up your AI-powered character generation and candidate matching...</p>
         </div>
       </CardContent>
-      <CardFooter>
-        <Button 
-          onClick={handleSetApiKey} 
-          className="w-full bg-castmatch-purple hover:bg-castmatch-deepPurple"
-        >
-          Set API Key
-        </Button>
-      </CardFooter>
     </Card>
   );
 };
