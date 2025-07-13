@@ -12,7 +12,7 @@ import { Loader2 } from 'lucide-react';
 
 // Define all dropdown options
 const genderOptions = ['Male', 'Female', 'Non-binary'];
-const ethnicityOptions = ['Caucasian', 'Black/African', 'Hispanic/Latino', 'Asian', 'Middle Eastern', 'South Asian', 'Mixed', 'Other'];
+const ethnicityOptions = ['Caucasian', 'Black/African', 'Hispanic/Latino', 'Asian', 'Indian', 'Middle Eastern', 'South Asian', 'Mixed', 'Other'];
 const hairstyleOptions = ['Short', 'Medium', 'Long', 'Bald', 'Curly', 'Straight', 'Wavy', 'Afro', 'Buzzcut', 'Other'];
 const bodyTypeOptions = ['Slim', 'Athletic', 'Average', 'Muscular', 'Plus Size', 'Petite', 'Tall'];
 const vibeOptions = ['Friendly', 'Serious', 'Mysterious', 'Energetic', 'Calm', 'Intense', 'Whimsical', 'Professional'];

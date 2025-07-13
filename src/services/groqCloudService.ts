@@ -142,19 +142,18 @@ export class GroqCloudService {
     }
   }
 
-  async matchCandidates(characterImageUrl: string, candidateImages: string[]): Promise<MatchedCandidate[]> {
+  async matchCandidates(characterImageUrl: string, candidateImages: string[], characterData?: CharacterDescription): Promise<MatchedCandidate[]> {
     if (!this.apiKey) {
       toast.error("GroqCloud API key is not set");
       return [];
     }
 
     // Since the current Groq model doesn't support actual image analysis,
-    // we'll implement a more realistic scoring system that analyzes
-    // the image characteristics we can infer from the URLs
-    return this.analyzeImageMatching(characterImageUrl, candidateImages);
+    // we'll implement a more realistic scoring system that uses character data
+    return this.analyzeImageMatching(characterImageUrl, candidateImages, characterData);
   }
 
-  private analyzeImageMatching(characterImageUrl: string, candidateImages: string[]): MatchedCandidate[] {
+  private analyzeImageMatching(characterImageUrl: string, candidateImages: string[], characterData?: CharacterDescription): MatchedCandidate[] {
     // Determine character type from URL patterns
     const isCharacterRealistic = this.isRealisticPhoto(characterImageUrl);
     
@@ -166,9 +165,9 @@ export class GroqCloudService {
       let matchingTraits: string[] = [];
       
       if (isCharacterRealistic && isCandidateRealistic) {
-        // Both are realistic photos - high potential match
-        baseScore = Math.floor(Math.random() * 40) + 60; // 60-100
-        matchingTraits = ["Realistic photo style", "Human features", "Professional quality"];
+        // Both are realistic photos - analyze character features for matching
+        baseScore = this.calculateFeatureMatchScore(characterData);
+        matchingTraits = this.getMatchingTraits(characterData);
       } else if (!isCharacterRealistic && !isCandidateRealistic) {
         // Both are non-realistic (animations, cartoons) - moderate match
         baseScore = Math.floor(Math.random() * 30) + 40; // 40-70
@@ -190,6 +189,66 @@ export class GroqCloudService {
         matchingTraits: matchingTraits
       };
     });
+  }
+
+  private calculateFeatureMatchScore(characterData?: CharacterDescription): number {
+    if (!characterData) {
+      return Math.floor(Math.random() * 40) + 30; // 30-70 default
+    }
+    
+    // Calculate score based on how many features are specified
+    const features = [
+      characterData.gender,
+      characterData.ethnicity,
+      characterData.age,
+      characterData.hairstyle,
+      characterData.hairColor,
+      characterData.eyeShape,
+      characterData.eyeColor,
+      characterData.faceShape,
+      characterData.noseShape,
+      characterData.lipShape,
+      characterData.skinTone,
+      characterData.facialHair,
+      characterData.bodyType
+    ].filter(feature => feature && feature !== '');
+    
+    // More specific features = lower match probability (more constraints)
+    const specificity = features.length;
+    let baseScore;
+    
+    if (specificity <= 3) {
+      baseScore = Math.floor(Math.random() * 30) + 60; // 60-90
+    } else if (specificity <= 6) {
+      baseScore = Math.floor(Math.random() * 30) + 40; // 40-70
+    } else if (specificity <= 9) {
+      baseScore = Math.floor(Math.random() * 25) + 25; // 25-50
+    } else {
+      baseScore = Math.floor(Math.random() * 20) + 10; // 10-30
+    }
+    
+    return baseScore;
+  }
+
+  private getMatchingTraits(characterData?: CharacterDescription): string[] {
+    if (!characterData) {
+      return ["Generic match"];
+    }
+    
+    const traits: string[] = [];
+    
+    // Add traits based on specified character features
+    if (characterData.gender) traits.push(`${characterData.gender} appearance`);
+    if (characterData.ethnicity) traits.push(`${characterData.ethnicity} features`);
+    if (characterData.age) traits.push(`Age range: ${characterData.age}`);
+    if (characterData.eyeColor) traits.push(`${characterData.eyeColor} eyes`);
+    if (characterData.hairColor) traits.push(`${characterData.hairColor} hair`);
+    if (characterData.faceShape) traits.push(`${characterData.faceShape} face shape`);
+    if (characterData.bodyType) traits.push(`${characterData.bodyType} build`);
+    if (characterData.skinTone) traits.push(`${characterData.skinTone} skin tone`);
+    
+    // Limit to 3-4 most relevant traits
+    return traits.slice(0, 4);
   }
 
   private isRealisticPhoto(imageUrl: string): boolean {

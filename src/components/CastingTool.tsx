@@ -66,7 +66,7 @@ const CastingTool = () => {
     
     try {
       const candidateImageUrls = candidates.map(c => c.image || "");
-      const results = await groqCloudService.matchCandidates(characterImage, candidateImageUrls);
+      const results = await groqCloudService.matchCandidates(characterImage, candidateImageUrls, characterData);
       
       // Update the candidate names in the results
       const namedResults = results.map((result, index) => {
