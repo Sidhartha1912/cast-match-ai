@@ -10,10 +10,10 @@ interface ApiKeyInputProps {
 
 const ApiKeyInput = ({ onKeySet }: ApiKeyInputProps) => {
   useEffect(() => {
-    // Use the provided API key directly
-    const apiKey = "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";
+    // Use the updated API key directly
+    const apiKey = "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";
     groqCloudService.setApiKey(apiKey);
-    toast.success("API key configured successfully");
+    toast.success("API key configured successfully with meta-llama/llama-4-scout-17b-16e-instruct model");
     onKeySet();
   }, [onKeySet]);
 
@@ -22,12 +22,12 @@ const ApiKeyInput = ({ onKeySet }: ApiKeyInputProps) => {
       <CardHeader>
         <CardTitle>GroqCloud API Integration</CardTitle>
         <CardDescription>
-          The application is being configured to connect to GroqCloud AI services
+          The application is configured to use meta-llama/llama-4-scout-17b-16e-instruct model for AI-powered character generation
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col space-y-4">
-          <p>Setting up your AI-powered character generation and candidate matching...</p>
+          <p>Setting up your AI-powered character generation and candidate matching with the latest Llama model...</p>
         </div>
       </CardContent>
     </Card>

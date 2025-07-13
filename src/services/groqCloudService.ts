@@ -41,8 +41,6 @@ export interface MatchedCandidate {
   matchingTraits: string[];
 }
 
-// Unsplash API for getting character images
-const UNSPLASH_API = "https://api.unsplash.com/search/photos";
 // Demo character images from Unsplash for different combinations
 const CHARACTER_IMAGES = {
   female: [
@@ -87,6 +85,8 @@ export class GroqCloudService {
     try {
       const prompt = this.buildCharacterPrompt(characterData);
       
+      console.log("Sending request to GroqCloud with model: meta-llama/llama-4-scout-17b-16e-instruct");
+      
       // Use GroqCloud API to get a character description
       const response = await fetch(this.apiUrl, {
         method: "POST",
@@ -95,7 +95,7 @@ export class GroqCloudService {
           "Authorization": `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: "llama3-70b-8192",
+          model: "meta-llama/llama-4-scout-17b-16e-instruct",
           messages: [
             {
               role: "system",
@@ -113,7 +113,8 @@ export class GroqCloudService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Failed to generate character image");
+        console.error("GroqCloud API error:", errorData);
+        throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
       }
 
       const data: GroqCloudResponse = await response.json();
@@ -123,7 +124,6 @@ export class GroqCloudService {
       let imageUrl = "";
       
       // Select an image based on gender for demo purposes
-      // In a real implementation, we would use an image generation API like DALL-E or Stable Diffusion
       if (characterData.gender?.toLowerCase() === 'female') {
         const randomIndex = Math.floor(Math.random() * CHARACTER_IMAGES.female.length);
         imageUrl = CHARACTER_IMAGES.female[randomIndex];
@@ -137,7 +137,7 @@ export class GroqCloudService {
       return imageUrl;
     } catch (error) {
       console.error("Error generating character image:", error);
-      toast.error("Failed to generate character image");
+      toast.error(`Failed to generate character: ${error.message}`);
       throw error;
     }
   }
@@ -180,7 +180,7 @@ export class GroqCloudService {
           "Authorization": `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: "llama3-70b-8192",
+          model: "meta-llama/llama-4-scout-17b-16e-instruct",
           messages: [
             {
               role: "system",
@@ -308,6 +308,6 @@ export class GroqCloudService {
   }
 }
 
-// Create a singleton instance for use throughout the app
-const groqCloudService = new GroqCloudService("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");
+// Create a singleton instance with the new API key
+const groqCloudService = new GroqCloudService("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");
 export default groqCloudService;
