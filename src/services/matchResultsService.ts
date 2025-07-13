@@ -51,7 +51,7 @@ export const getRecentMatchResults = async (limit = 5): Promise<MatchResultRecor
       created_at: item.created_at || undefined,
       character_data: item.character_data,
       character_image: item.character_image,
-      matched_candidates: item.matched_candidates as MatchedCandidate[]
+      matched_candidates: (item.matched_candidates as unknown) as MatchedCandidate[]
     }));
     
     return transformedData;
