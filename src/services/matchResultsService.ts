@@ -20,9 +20,9 @@ export const saveMatchResults = async (
     const { data, error } = await supabase
       .from('match_results')
       .insert({
-        character_data: characterData,
+        character_data: characterData as any,
         character_image: characterImage,
-        matched_candidates: matchedCandidates
+        matched_candidates: matchedCandidates as any
       })
       .select();
 
@@ -45,7 +45,16 @@ export const getRecentMatchResults = async (limit = 5): Promise<MatchResultRecor
 
     if (error) throw error;
     
-    return data || [];
+    // Transform the data to match our interface
+    const transformedData: MatchResultRecord[] = (data || []).map(item => ({
+      id: item.id,
+      created_at: item.created_at || undefined,
+      character_data: item.character_data,
+      character_image: item.character_image,
+      matched_candidates: item.matched_candidates as MatchedCandidate[]
+    }));
+    
+    return transformedData;
   } catch (error) {
     console.error('Error fetching match results:', error);
     return [];
