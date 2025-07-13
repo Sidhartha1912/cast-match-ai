@@ -167,7 +167,7 @@ export class GroqCloudService {
       if (isCharacterRealistic && isCandidateRealistic) {
         // Both are realistic photos - analyze character features for matching
         baseScore = this.calculateFeatureMatchScore(characterData);
-        matchingTraits = this.getMatchingTraits(characterData);
+        matchingTraits = this.getMatchingTraits(characterData, index);
       } else if (!isCharacterRealistic && !isCandidateRealistic) {
         // Both are non-realistic (animations, cartoons) - moderate match
         baseScore = Math.floor(Math.random() * 30) + 40; // 40-70
@@ -230,25 +230,86 @@ export class GroqCloudService {
     return baseScore;
   }
 
-  private getMatchingTraits(characterData?: CharacterDescription): string[] {
+  private getMatchingTraits(characterData?: CharacterDescription, candidateIndex?: number): string[] {
     if (!characterData) {
       return ["Generic match"];
     }
     
-    const traits: string[] = [];
+    // Collect all selected traits (only non-empty values)
+    const allAvailableTraits: string[] = [];
     
-    // Add traits based on specified character features
-    if (characterData.gender) traits.push(`${characterData.gender} appearance`);
-    if (characterData.ethnicity) traits.push(`${characterData.ethnicity} features`);
-    if (characterData.age) traits.push(`Age range: ${characterData.age}`);
-    if (characterData.eyeColor) traits.push(`${characterData.eyeColor} eyes`);
-    if (characterData.hairColor) traits.push(`${characterData.hairColor} hair`);
-    if (characterData.faceShape) traits.push(`${characterData.faceShape} face shape`);
-    if (characterData.bodyType) traits.push(`${characterData.bodyType} build`);
-    if (characterData.skinTone) traits.push(`${characterData.skinTone} skin tone`);
+    if (characterData.gender) allAvailableTraits.push(`${characterData.gender} appearance`);
+    if (characterData.ethnicity) allAvailableTraits.push(`${characterData.ethnicity} features`);
+    if (characterData.age) allAvailableTraits.push(`Age range: ${characterData.age}`);
+    if (characterData.eyeColor) allAvailableTraits.push(`${characterData.eyeColor} eyes`);
+    if (characterData.hairColor) allAvailableTraits.push(`${characterData.hairColor} hair`);
+    if (characterData.faceShape) allAvailableTraits.push(`${characterData.faceShape} face shape`);
+    if (characterData.bodyType) allAvailableTraits.push(`${characterData.bodyType} build`);
+    if (characterData.skinTone) allAvailableTraits.push(`${characterData.skinTone} skin tone`);
+    if (characterData.hairstyle) allAvailableTraits.push(`${characterData.hairstyle} hairstyle`);
+    if (characterData.eyeShape) allAvailableTraits.push(`${characterData.eyeShape} eye shape`);
+    if (characterData.noseShape) allAvailableTraits.push(`${characterData.noseShape} nose shape`);
+    if (characterData.lipShape) allAvailableTraits.push(`${characterData.lipShape} lips`);
+    if (characterData.facialHair && characterData.facialHair !== 'Clean-shaven' && characterData.facialHair !== 'None') {
+      allAvailableTraits.push(`${characterData.facialHair.toLowerCase()}`);
+    }
+    if (characterData.jawShape) allAvailableTraits.push(`${characterData.jawShape} jaw`);
+    if (characterData.skinTexture) allAvailableTraits.push(`${characterData.skinTexture} skin`);
     
-    // Limit to 3-4 most relevant traits
-    return traits.slice(0, 4);
+    // Add special features if any are selected
+    if (characterData.specialFeatures && characterData.specialFeatures.length > 0) {
+      characterData.specialFeatures.forEach(feature => {
+        allAvailableTraits.push(feature.toLowerCase());
+      });
+    }
+    
+    // Add personality vibes if any are selected
+    if (characterData.vibe && characterData.vibe.length > 0) {
+      characterData.vibe.forEach(vibe => {
+        allAvailableTraits.push(`${vibe.toLowerCase()} vibe`);
+      });
+    }
+    
+    if (characterData.personalityVibe && characterData.personalityVibe.length > 0) {
+      characterData.personalityVibe.forEach(vibe => {
+        allAvailableTraits.push(`${vibe.toLowerCase()} personality`);
+      });
+    }
+    
+    // If no traits available, return generic
+    if (allAvailableTraits.length === 0) {
+      return ["Generic match"];
+    }
+    
+    // Randomly select 2-4 traits for this specific candidate
+    // Use candidateIndex as seed for consistent but different results per candidate
+    const seed = candidateIndex || 0;
+    const shuffledTraits = this.shuffleArrayWithSeed([...allAvailableTraits], seed);
+    const numTraits = Math.min(Math.floor(Math.random() * 3) + 2, shuffledTraits.length); // 2-4 traits
+    
+    return shuffledTraits.slice(0, numTraits);
+  }
+
+  // Simple seeded shuffle to ensure different but consistent results per candidate
+  private shuffleArrayWithSeed<T>(array: T[], seed: number): T[] {
+    const shuffled = [...array];
+    let m = shuffled.length;
+    let t: T;
+    let i: number;
+
+    // While there remain elements to shuffle…
+    while (m) {
+      // Pick a remaining element…
+      i = Math.floor((seed * 9301 + 49297) % 233280 / 233280 * m--);
+      seed = (seed * 9301 + 49297) % 233280;
+
+      // And swap it with the current element.
+      t = shuffled[m];
+      shuffled[m] = shuffled[i];
+      shuffled[i] = t;
+    }
+
+    return shuffled;
   }
 
   private isRealisticPhoto(imageUrl: string): boolean {
